@@ -27,7 +27,7 @@ class Xprint:
         '''
         self.feed_dict = inputs
 
-    def p(self, variables, num=10):
+    def p(self, variables, num=10, r=False):
         '''
         print
         '''
@@ -40,9 +40,11 @@ class Xprint:
                 "This is not collected or not a tensor."
             var_obj = self.collected_var[var_name]
             var_value = self.sess.run(var_obj, feed_dict=self.feed_dict)
-            # import pdb; pdb.set_trace()
-            result = self.print(var_value, num)
-            print(var_name+' has a shape of '+str(var_value.shape)+ \
+            if r:
+                return var_value
+            else:
+                result = self.print(var_value, num)
+                print(var_name+' has a shape of '+str(var_value.shape)+ \
                 ', its value is:', result)
 
     def set_sess(self, sess):

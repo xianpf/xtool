@@ -19,7 +19,6 @@ setup(
         'numpy',
         'pandas',
         'scipy',
-        'tensorflow>=1.8.0',
     ],
     description="Teaching tools for using python and machine learning tasks.",
     author="XIAN Pengfei",
