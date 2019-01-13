@@ -1,0 +1,5 @@
+xtool.egg-info/PKG-INFO
+xtool.egg-info/SOURCES.txt
+xtool.egg-info/dependency_links.txt
+xtool.egg-info/requires.txt
+xtool.egg-info/top_level.txt
