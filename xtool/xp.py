@@ -18,8 +18,8 @@ class Xprint:
         for k,v in var_dict.items():
             if auto_sess and isinstance(v, tf.Session):
                 self.sess = v
-            if isinstance(v, tf.Tensor):
-                self.collected_var.update({pre+k:v})
+            # if isinstance(v, tf.Tensor):
+            self.collected_var.update({pre+k:v})
                 
     def feed(self, inputs):
         '''
@@ -35,11 +35,15 @@ class Xprint:
             variables = [variables]
         assert self.sess is not None, \
             "please set the sess first. Use set_sess()"
-        for var_name in variables:
-            assert var_name in self.collected_var.keys(), \
-                "This is not collected or not a tensor."
-            var_obj = self.collected_var[var_name]
-            var_value = self.sess.run(var_obj, feed_dict=self.feed_dict)
+        for var in variables:
+            var_name = 'unknown'
+            if isinstance(var, str):
+                var_name = var
+                assert var_name in self.collected_var.keys(), \
+                    "This is not collected or not a tensor."
+                var = self.collected_var[var_name]
+            assert isinstance(var, tf.Tensor), "This is not a tensor."
+            var_value = self.sess.run(var, feed_dict=self.feed_dict)
             if r:
                 return var_value
             else:
@@ -60,5 +64,9 @@ class Xprint:
             print_str = str(val)
         return print_str
 
+    def g(self, var_name):
+        assert var_name in self.collected_var.keys(), \
+            "This is not collected."
+        return self.collected_var[var_name]
 
 xp = Xprint()

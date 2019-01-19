@@ -1,4 +1,4 @@
-version_info = (0, 1, 1)
+version_info = (0, 1, 2)
 # format:
 # ('xtool_major', 'xtool_minor', 'xtool_patch')
 
