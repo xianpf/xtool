@@ -17,3 +17,4 @@ Welcome to xtool!
 ```xp.p('tensor_var'[, num=20, r=False])```
 - 支持直接打印tensor内容
 ```xp.p(mytensor)```
+- 若没有自动解析session，可以自己指定session： ```xp.set_sess(sess)```
