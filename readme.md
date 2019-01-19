@@ -15,3 +15,5 @@ Welcome to xtool!
 - ```xp.collect(locals()[, pre=''])```
 - 支持返回真值
 ```xp.p('tensor_var'[, num=20, r=False])```
+- 支持直接打印tensor内容
+```xp.p(mytensor)```
