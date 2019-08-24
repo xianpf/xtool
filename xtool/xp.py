@@ -1,4 +1,5 @@
 import tensorflow as tf
+from matplotlib import pyplot as plt
 
 class Xprint:
     '''
@@ -69,4 +70,80 @@ class Xprint:
             "This is not collected."
         return self.collected_var[var_name]
 
+class XprintTorch:
+    '''
+    A tool for debuging tensorflow variables.
+    '''
+
+    def __init__(self):
+        self.content = ''
+
+    def col(self, module=None, inputs=None):
+        '''
+        Use "xp.collect( )" to collect variables.
+        '''
+        if module is not None:
+            self.content += '\n'+str(module)
+            for k, v in module._parameters.items():
+                self.content+='\n\thas param '+k+' with shape '+str(v.shape)
+
+        if inputs is not None:
+            self.content += '\n The input has shape of '+str(inputs.shape)
+    
+    def print(self, show=True):
+        if show:
+            print(self.content)
+        return self.content
+        
+class Xwatch:
+    '''
+    A tool for debuging tensorflow variables.
+    '''
+
+    def __init__(self):
+        self.variables = dict()
+
+    def collect(self, name, var):
+        self.variables[name] = var
+
+    def get(self, name):
+        return self.variables[name]
+
+class Xshow:
+    '''
+    A tool for debuging tensorflow variables.
+    '''
+
+    def __init__(self):
+        self.variables = dict()
+
+    def collect(self, name, var):
+        self.variables[name] = var
+
+    def get(self, name):
+        return self.variables[name]
+
+class Xstat():
+    def __init__(self, dtype=None):
+        pass
+    
+    def collect_data(self, one_data):
+        pass
+
+
+
 xp = Xprint()
+xpt = XprintTorch()
+xw = Xwatch()
+# xs = Xshow()
+
+def xshow(img):
+    plt.figure()
+    plt.imshow(img)
+    plt.show()
+
+def test():
+    xst = Xstat()
+    print(test)
+
+test()
