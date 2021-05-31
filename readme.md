@@ -2,12 +2,19 @@
 
 Welcome to xtool! 
 ==================================
-当前版本为0.1.2
+版本: 0.1.3
+
+## 特性
+### show模块用于在code中方便地打印和输出各种格式的文字，表格，图像等直观结果
+- [xtool.show.list)](https://www.github.com/xianpf/xtool): 把
+
 
 ## 安装方法
+- 直接在线安装
+  - pip install git+https://www.github.com/xianpf/xtool
 - 下载此仓库到本地
-- ```cd xtool```
-- ```pip install -e .```
+  - ```cd xtool```
+  - ```pip install -e .```
 
 ## 使用方法
 - ```from xtool.xp import xp```
