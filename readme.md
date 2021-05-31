@@ -6,7 +6,7 @@ Welcome to xtool!
 
 ## 特性
 ### show模块用于在code中方便地打印和输出各种格式的文字，表格，图像等直观结果
-- [xtool.show.list)](https://www.github.com/xianpf/xtool): 把
+- [xtool.show.list)](https://www.github.com/xianpf/xtool) : 把
 
 
 ## 安装方法
