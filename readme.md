@@ -8,6 +8,7 @@ Welcome to xtool!
 ### show模块用于在code中方便地打印和输出各种格式的文字，表格，图像等直观结果
 - [xtool.show.list](https://www.github.com/xianpf/xtool)：把**list列表**罗列的内容输出为terminal表格，xlsx格式，markdown表格， panda表格等。
 - [xtool.show.plot](https://www.github.com/xianpf/xtool)：使用plt输出
+- [xtool.show.savepltfig](https://github.com/xianpf/xtool/blob/master/usefulCodes/save_plt_fig.py): 把histogram等figure的展示图存为numpy可即时编辑
 
 ### chrome模块用于使用chrome进行的一些自动化操作
 - xtool.chrome.*
