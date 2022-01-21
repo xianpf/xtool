@@ -1,6 +1,20 @@
 from typing import List
 
 
+'''
+    prMt = ParamMeters(['loss', 'N0rate', 'tgt_num'])
+    for ep in range(num_ep):
+        prMt.init(['loss', 'N0rate', 'tgt_num'])
+        for iter, batch in enumerate(data_loader):
+            imgs, tgts = batch[0].to(device), {k:v.to(device) for k,v in batch[1].items()}
+            predictions, loss = model(imgs, tgts)
+            prMt.collect('loss', loss, len(imgs))
+            prMt.collect('N0rate', pred_n0, len(pred_n0))
+        prt(f"{datetime.datetime.now().strftime('%d-%H:%M:%S')} "
+                f"Ep:{ep}/{num_ep}-{iter}/{len(data_loader)}\t| avg_loss:{prMt.avg('loss'):0.3f}, "
+                f"tgt_num|")
+'''
+
 class ParamMeters():
     def __init__(self, vars:List[str] = []) -> None:
         self.data = dict()
