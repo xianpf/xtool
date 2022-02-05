@@ -10,6 +10,7 @@ Welcome to xtool!
 - [xtool.show.plot](https://www.github.com/xianpf/xtool)：使用plt输出
 - [xtool.show.savepltfig](https://github.com/xianpf/xtool/blob/master/usefulCodes/save_plt_fig.py): 把histogram等figure的展示图存为numpy可即时编辑
 - [xtool.ParamMeter](https://github.com/xianpf/xtool/blob/master/usefulCodes/paramMeters.py): 好用的参数收集器
+- [xtool.stack_imgs](https://github.com/xianpf/xtool/blob/master/usefulCodes/paramMeters.py): 把任意的numpy / torch tensor 以括弧组织起来，能输出stack到一起的大图，大大方便了对比看图
 
 ### chrome模块用于使用chrome进行的一些自动化操作
 - xtool.chrome.*
