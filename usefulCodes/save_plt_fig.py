@@ -1,5 +1,5 @@
 
-    def prob_histgram(self, pixel_probs_k):
+    def prob_histgram(pixel_probs_k):
         from io import BytesIO
         from PIL import Image
         buffer = BytesIO()
