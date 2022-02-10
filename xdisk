@@ -1,0 +1,96 @@
+#!/usr/bin/python3
+# python ~/.config/DiskUse/disk_use.py -r
+# chmod +x xdisk
+
+import os, pickle, argparse
+
+
+def psave(data, path):
+    with open(path, "wb") as f1:
+        pickle.dump(data, f1)
+def pload(path):
+    with open(path, "rb") as f2:
+        output = pickle. load(f2)
+    return output
+
+def hsize(bytes, dtype='str'):
+    if bytes > 2**40:
+        return f"{(bytes / 2**40):.3f}TB" if dtype=='str' else ((bytes / 2**40), 'TB')
+    elif bytes > 2**30:
+        return f"{(bytes / 2**30):.3f}GB" if dtype=='str' else ((bytes / 2**30), 'GB')
+    elif bytes > 2**20:
+        return f"{(bytes / 2**20):.3f}MB" if dtype=='str' else ((bytes / 2**20), 'MB')
+    elif bytes > 2**10:
+        return f"{(bytes / 2**10):.3f}KB" if dtype=='str' else ((bytes / 2**10), 'KB')
+    else:
+        return f"{(bytes / 1.0):.3f}B" if dtype=='str' else ((bytes / 1.0), 'B')
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-r', '--refresh', action='store_true')
+parser.add_argument('-d', '--directory', default='')
+parser.add_argument('-m', '--mode', default='folder', help="folder/childfile/bigfile/del_zombie")
+args = parser.parse_args()
+
+app_data_dir = os.path.join(os.getenv('HOME'), '.config', 'DiskUse')
+target_dir = args.directory if args.directory else os.getcwd()
+target_dir = os.path.abspath(target_dir)
+info_path = os.path.join(app_data_dir, 'dir_info_dict.pth')
+if os.path.exists(info_path): dir_info = pload(info_path) 
+else: dir_info = dict()
+info_modified = False
+
+for root, dirs, files in os.walk(target_dir, topdown=False):
+    if root in dir_info and not args.refresh: continue
+    info = dict()
+    info['this_path'] = root
+    info['files'] = [os.path.join(root, name) for name in files if not os.path.islink(os.path.join(root, name))] # 排除ln软连接
+    info['sub_dirs'] = [os.path.join(root, name) for name in dirs if not os.path.islink(os.path.join(root, name))]
+
+    info['file_sizes'] = [os.path.getsize(fname) for fname in info['files']]
+    info['sub_dirs_sizes'] = [dir_info[sub_dir]['sum_size'] for sub_dir in info['sub_dirs']]
+    info['sum_size'] = sum(info['file_sizes']+info['sub_dirs_sizes'])
+
+    dir_info[root] = info
+    info_modified = True
+    # if root == "/home/xianr/works/pytorch-pwc/images": import pdb; pdb.set_trace()
+
+
+if info_modified: psave(dir_info, info_path)
+
+if args.mode == 'folder':
+    flist = dir_info[target_dir]['sub_dirs'] + dir_info[target_dir]['files']
+    size_list = dir_info[target_dir]['sub_dirs_sizes'] + dir_info[target_dir]['file_sizes']
+    sorted_zip = [x for x in sorted(zip(size_list, flist), reverse=True)]
+
+    print(f"\033[95m\033[1m{hsize(dir_info[target_dir]['sum_size']):10s}: {target_dir}\033[0m")
+    print('\033[93m''-'*50+'\033[0m')
+    for size, fname in sorted_zip:
+        short_fname = fname[len(target_dir)+1:]
+        if os.path.isdir(fname): short_fname = '\033[92m\033[1m'+short_fname+'\033[0m'
+        print(f"{hsize(size):10s}: {short_fname}")
+
+else:
+
+    info_list = [v for v in dir_info.values() if v['sum_file_size'] > 2**30] #1GB
+    info_list.sort(key=lambda x: x['sum_file_size'], reverse=True)
+    for info in info_list:
+        print(f"{hsize(info['sum_file_size'])}\t{info['this_path']}")
+
+    # info_list2 = [v for v in dir_info.values()]
+    # info_list2.sort(key=lambda x: len(x['this_path']), reverse=True)
+    # for info in info_list2:
+    #     dir_sum = 0
+    #     for dir in info['sub_dirs']:
+    #         dir_sum += dir_info[os.path.join(info['this_path'], dir)]['sum_all_size']
+
+    #     dir_info[info['this_path']]['sum_all_size'] = info['sum_file_size'] + dir_sum
+
+    # import pdb; pdb.set_trace()
+    # torch.save(dir_info, pkg_path)
+
+    info_list3 = [v for v in dir_info.values() if v['sum_all_size'] > 2**30]
+    info_list3.sort(key=lambda x: x['sum_all_size'], reverse=True)
+    for info in info_list3:
+        print(f"{hsize(info['sum_all_size'])}\t{info['this_path']}")
+
