@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # python ~/.config/DiskUse/disk_use.py -r
+# chmod +x xdisk
 import os, pickle, argparse
 
 
