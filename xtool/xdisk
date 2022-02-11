@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 # python ~/.config/DiskUse/disk_use.py -r
-# chmod +x xdisk
-
 import os, pickle, argparse
 
 
@@ -40,21 +38,32 @@ if os.path.exists(info_path): dir_info = pload(info_path)
 else: dir_info = dict()
 info_modified = False
 
+walk_count = 0
 for root, dirs, files in os.walk(target_dir, topdown=False):
+    walk_count += 1; print(f'Collecting {walk_count} folders in {root[:20]}...', end='\r')
     if root in dir_info and not args.refresh: continue
     info = dict()
     info['this_path'] = root
-    info['files'] = [os.path.join(root, name) for name in files if not os.path.islink(os.path.join(root, name))] # 排除ln软连接
-    info['sub_dirs'] = [os.path.join(root, name) for name in dirs if not os.path.islink(os.path.join(root, name))]
 
-    info['file_sizes'] = [os.path.getsize(fname) for fname in info['files']]
-    info['sub_dirs_sizes'] = [dir_info[sub_dir]['sum_size'] for sub_dir in info['sub_dirs']]
-    info['sum_size'] = sum(info['file_sizes']+info['sub_dirs_sizes'])
+    info['files'] = [os.path.join(root, name) for name in files]
+    info['sub_dirs'] = [os.path.join(root, name) for name in dirs if not os.path.islink(os.path.join(root, name))]
+    
+    info['file_sizes'] = []
+    for fname in info['files']:
+        if os.path.islink(fname): info['file_sizes'].append(-0.001) # 排除ln软连接
+        elif not os.access(fname, os.R_OK): info['file_sizes'].append(-0.002) # 排除没有读取权限
+        else: info['file_sizes'].append(os.path.getsize(fname))
+    info['sub_dir_sizes'] = []
+    for sub_dir in info['sub_dirs']:
+        if os.path.islink(sub_dir): info['sub_dir_sizes'].append(-0.001) # 排除ln软连接
+        elif not os.access(sub_dir, os.R_OK): info['sub_dir_sizes'].append(-0.002) # 排除没有读取权限
+        else: info['sub_dir_sizes'].append(dir_info[sub_dir]['sum_size'])
+    info['sum_size'] = sum(info['file_sizes']+info['sub_dir_sizes'])
 
     dir_info[root] = info
     info_modified = True
     # if root == "/home/xianr/works/pytorch-pwc/images": import pdb; pdb.set_trace()
-
+print(f'Collecting {walk_count} folders in {root[:20]}...')
 
 if info_modified: psave(dir_info, info_path)
 
@@ -71,23 +80,11 @@ if args.mode == 'folder':
         print(f"{hsize(size):10s}: {short_fname}")
 
 else:
-
+    import pdb; pdb.set_trace()
     info_list = [v for v in dir_info.values() if v['sum_file_size'] > 2**30] #1GB
     info_list.sort(key=lambda x: x['sum_file_size'], reverse=True)
     for info in info_list:
         print(f"{hsize(info['sum_file_size'])}\t{info['this_path']}")
-
-    # info_list2 = [v for v in dir_info.values()]
-    # info_list2.sort(key=lambda x: len(x['this_path']), reverse=True)
-    # for info in info_list2:
-    #     dir_sum = 0
-    #     for dir in info['sub_dirs']:
-    #         dir_sum += dir_info[os.path.join(info['this_path'], dir)]['sum_all_size']
-
-    #     dir_info[info['this_path']]['sum_all_size'] = info['sum_file_size'] + dir_sum
-
-    # import pdb; pdb.set_trace()
-    # torch.save(dir_info, pkg_path)
 
     info_list3 = [v for v in dir_info.values() if v['sum_all_size'] > 2**30]
     info_list3.sort(key=lambda x: x['sum_all_size'], reverse=True)
