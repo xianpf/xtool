@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 # python ~/.config/DiskUse/disk_use.py -r
 # chmod +x xdisk
-import os, pickle, argparse
-
+import os, pickle, argparse, shutil
 
 def psave(data, path):
     with open(path, "wb") as f1:
@@ -23,11 +22,10 @@ def hsize(bytes, dtype='str'):
     else:
         return f"{(bytes / 1.0):.3f}B" if dtype=='str' else ((bytes / 1.0), 'B')
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', '--refresh', action='store_true')
 parser.add_argument('-d', '--directory', default='')
-parser.add_argument('-s', '--skip_collect', action='store_true')
+parser.add_argument('--reset', action='store_true')
 parser.add_argument('-m', '--mode', default='folder', help="folder/childfile/bigfile/del_zombie")
 args = parser.parse_args()
 
@@ -35,52 +33,68 @@ app_data_dir = os.path.join(os.getenv('HOME'), '.config', 'DiskUse')
 target_dir = args.directory if args.directory else os.getcwd()
 target_dir = os.path.abspath(target_dir)
 info_path = os.path.join(app_data_dir, 'dir_info_dict.pth')
+if args.reset and os.path.exists(info_path): os.remove(info_path)
 if os.path.exists(info_path): dir_info = pload(info_path) 
 else: dir_info = dict()
-info_modified = False
 
-if not args.skip_collect:
+def stat_sizes(root, files, dirs):
+    info = dict()
+    info['this_path'] = root
+
+    info['files'] = [os.path.join(root, name) for name in files]
+    info['sub_dirs'] = [os.path.join(root, name) for name in dirs if not os.path.islink(os.path.join(root, name))]
+    
+    info['file_sizes'] = []
+    for fname in info['files']:
+        if os.path.islink(fname): info['file_sizes'].append(-0.001) # 排除ln软连接
+        elif not os.access(fname, os.R_OK): info['file_sizes'].append(-0.002) # 排除没有读取权限
+        else: info['file_sizes'].append(os.path.getsize(fname))
+    info['sub_dir_sizes'] = []
+    for sub_dir in info['sub_dirs']:
+        if os.path.islink(sub_dir): info['sub_dir_sizes'].append(-0.001) # 排除ln软连接
+        elif not os.access(sub_dir, os.R_OK): info['sub_dir_sizes'].append(-0.002) # 排除没有读取权限
+        else:
+            try: info['sub_dir_sizes'].append(dir_info[sub_dir]['sum_size'])
+            except: info['file_sizes'].append(0.000)
+            # info['sub_dir_sizes'].append(dir_info[sub_dir]['sum_size'])
+    info['sum_size'] = sum(info['file_sizes']+info['sub_dir_sizes'])
+
+    return info
+
+if args.refresh or len(dir_info)==0:
     walk_count = 0
     for root, dirs, files in os.walk(target_dir, topdown=False):
         walk_count += 1; print(f'Collecting {walk_count} folders in {root[:20]}...', end='\r')
-        if root in dir_info and not args.refresh: continue
-        info = dict()
-        info['this_path'] = root
-
-        info['files'] = [os.path.join(root, name) for name in files]
-        info['sub_dirs'] = [os.path.join(root, name) for name in dirs if not os.path.islink(os.path.join(root, name))]
-        
-        info['file_sizes'] = []
-        for fname in info['files']:
-            if os.path.islink(fname): info['file_sizes'].append(-0.001) # 排除ln软连接
-            elif not os.access(fname, os.R_OK): info['file_sizes'].append(-0.002) # 排除没有读取权限
-            else: info['file_sizes'].append(os.path.getsize(fname))
-        info['sub_dir_sizes'] = []
-        for sub_dir in info['sub_dirs']:
-            if os.path.islink(sub_dir): info['sub_dir_sizes'].append(-0.001) # 排除ln软连接
-            elif not os.access(sub_dir, os.R_OK): info['sub_dir_sizes'].append(-0.002) # 排除没有读取权限
-            else: info['sub_dir_sizes'].append(dir_info[sub_dir]['sum_size'])
-        info['sum_size'] = sum(info['file_sizes']+info['sub_dir_sizes'])
-
-        dir_info[root] = info
-        info_modified = True
+        dir_info[root] = stat_sizes(root, files, dirs)
     print(f'Collecting {walk_count} folders in {root[:20]}...')
-
-if info_modified: psave(dir_info, info_path)
+    dead_paths = [p for p in dir_info.keys() if p.startswith(target_dir) and not os.path.exists(p)]
+    for path in dead_paths: dir_info.pop(path)
+    parent_dir = target_dir
+    while parent_dir != '/':
+        dir_info[parent_dir] = stat_sizes(parent_dir, 
+                [f for f in dir_info[parent_dir]['files'] if os.path.exists(f)],
+                [d for d in dir_info[parent_dir]['sub_dirs'] if os.path.exists(d)])
+        parent_dir = os.path.split(parent_dir)[0]
+    dir_info['/'] = stat_sizes('/',
+                [f for f in dir_info['/']['files'] if os.path.exists(f)],
+                [d for d in dir_info['/']['sub_dirs'] if os.path.exists(d)])
+    psave(dir_info, info_path)
 
 if args.mode == 'folder':
     flist = dir_info[target_dir]['sub_dirs'] + dir_info[target_dir]['files']
     size_list = dir_info[target_dir]['sub_dir_sizes'] + dir_info[target_dir]['file_sizes']
     sorted_zip = [x for x in sorted(zip(size_list, flist), reverse=True)]
+    disk_use = shutil.disk_usage(target_dir)
 
     print(f"\033[95m\033[1m{hsize(dir_info[target_dir]['sum_size']):10s}: {target_dir}\033[0m")
+    print(f"\033[95m\033[1mDisk Used: {hsize(disk_use[1]):10s}/ {hsize(disk_use[0]):10s}, Free: {hsize(disk_use[2]):10s}\033[0m")
     print('\033[93m''-'*50+'\033[0m')
     for size, fname in sorted_zip:
+        # import pdb; pdb.set_trace()
         short_fname = fname.replace(target_dir, '')
         if short_fname.startswith('/') : short_fname = short_fname[1:]
         if os.path.isdir(fname): short_fname = '\033[92m\033[1m'+short_fname+'\033[0m'
         print(f"{hsize(size):10s}: {short_fname}")
-
 else:
     import pdb; pdb.set_trace()
     info_list = [v for v in dir_info.values() if v['sum_file_size'] > 2**30] #1GB
